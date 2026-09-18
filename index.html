@@ -3,236 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FoodHub - Rider Portal</title>
+    <title>FoodHub - Order Delicious Food</title>
+    <!-- Google Fonts & Tailwind CSS -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Poppins', sans-serif; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        .hero-bg {
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80');
+            background-size: cover; background-position: center;
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col justify-between">
 
-    <!-- Header -->
-    <header class="bg-white shadow-sm sticky top-0 z-35">
+    <!-- Navigation Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-30">
         <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-orange-500 flex items-center gap-2">
-                <i data-lucide="bike"></i> FoodHub Rider Portal
+            <h1 class="text-2xl font-bold text-orange-500 flex items-center gap-2 cursor-pointer">
+                <i data-lucide="utensils"></i> FoodHub
             </h1>
-            <div id="authHeaderBtn"></div>
+            <div class="flex items-center gap-3">
+                <button class="relative bg-orange-50 hover:bg-orange-100 text-orange-600 px-4 py-2.5 rounded-xl transition flex items-center gap-2 font-medium">
+                    <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                    <span>Cart</span>
+                    <span id="cartCount" class="bg-orange-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">0</span>
+                </button>
+            </div>
         </div>
     </header>
 
-    <!-- Main Container -->
-    <main class="max-w-4xl mx-auto px-4 py-10 flex-grow w-full">
-
-        <!-- 1. AUTH SECTION (Login & Register) -->
-        <div id="authSection" class="bg-white p-8 rounded-2xl shadow-md max-w-md mx-auto">
-            <h2 id="authTitle" class="text-2xl font-bold mb-6 text-center text-gray-800">Rider Login</h2>
-            
-            <div id="registerFields" class="space-y-4 mb-4 hidden">
-                <input type="text" id="regName" placeholder="Full Name" class="w-full px-4 py-3 rounded-xl border focus:outline-orange-500">
-                <input type="text" id="regVehicle" placeholder="Vehicle Info (e.g. Bicycle / Scooter)" class="w-full px-4 py-3 rounded-xl border focus:outline-orange-500">
-            </div>
-
-            <div class="space-y-4">
-                <input type="text" id="authPhone" placeholder="Phone Number" class="w-full px-4 py-3 rounded-xl border focus:outline-orange-500">
-                <input type="password" id="authPassword" placeholder="Password" class="w-full px-4 py-3 rounded-xl border focus:outline-orange-500">
-                
-                <button onclick="handleAuthAction()" id="authSubmitBtn" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-xl transition shadow-lg shadow-orange-500/30">
-                    Login
-                </button>
-            </div>
-
-            <p class="text-center text-sm mt-6 text-gray-500">
-                <span id="authToggleText">Don't have an account?</span> 
-                <button onclick="toggleAuthMode()" class="text-orange-500 font-semibold hover:underline ml-1" id="authToggleBtn">Register here</button>
-            </p>
-        </div>
-
-        <!-- 2. RIDER DASHBOARD SECTION (Hidden Initially) -->
-        <div id="dashboardSection" class="hidden space-y-8">
-            <!-- Rider Info Card -->
-            <div class="bg-white p-6 rounded-2xl shadow-md flex justify-between items-center">
-                <div>
-                    <h3 id="riderNameDisplay" class="text-2xl font-bold text-gray-800"></h3>
-                    <p id="riderVehicleDisplay" class="text-gray-500 text-sm mt-1"></p>
-                </div>
-                <span class="bg-green-100 text-green-600 px-4 py-1.5 rounded-full text-xs font-semibold">Active & Online</span>
-            </div>
-
-            <!-- Available Orders Section -->
-            <div class="bg-white p-6 rounded-2xl shadow-md">
-                <h3 class="text-xl font-bold mb-4 flex items-center gap-2"><i data-lucide="package"></i> Available Orders for Delivery</h3>
-                <div id="availableOrdersList" class="space-y-4">
-                    <!-- Loaded dynamically -->
+    <!-- Main Views Container -->
+    <main class="flex-grow">
+        <!-- Hero Section -->
+        <section class="hero-bg text-white py-16 px-4 text-center">
+            <div class="max-w-3xl mx-auto">
+                <h2 class="text-4xl font-bold mb-4">Delicious Food, Delivered Fast</h2>
+                <p class="text-gray-200 mb-8">Discover top-rated vendors and menu items near you.</p>
+                <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                    <div class="relative flex-grow max-w-md">
+                        <i data-lucide="search" class="absolute left-4 top-3.5 text-gray-400 w-5 h-5"></i>
+                        <input type="text" id="searchInput" placeholder="Search vendors or items..." class="w-full pl-12 pr-4 py-3 rounded-xl text-gray-800 bg-white focus:outline-none shadow-md">
+                    </div>
+                    <select id="categoryFilter" class="px-4 py-3 rounded-xl text-gray-800 bg-white focus:outline-none shadow-md font-medium">
+                        <option value="all">All Categories</option>
+                        <option value="Fast Food">Fast Food</option>
+                        <option value="Italian">Italian</option>
+                        <option value="Desi">Desi / Local</option>
+                        <option value="Dessert">Dessert</option>
+                    </select>
                 </div>
             </div>
-        </div>
+        </section>
+
+        <!-- Vendors Grid -->
+        <section class="max-w-7xl mx-auto px-4 py-10" id="vendorSection">
+            <h3 class="text-2xl font-bold mb-6">Available Restaurants</h3>
+            <div id="vendorContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Loaded dynamically -->
+            </div>
+        </section>
+
+        <!-- Menu View (Hidden initially) -->
+        <section id="menuSection" class="max-w-7xl mx-auto px-4 py-10 hidden">
+            <button class="mb-6 flex items-center gap-2 text-orange-500 font-semibold hover:underline">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i> Back to Restaurants
+            </button>
+            <div id="vendorHeader" class="bg-white p-6 rounded-2xl shadow-sm mb-8 flex items-center gap-4"></div>
+            <h4 class="text-xl font-bold mb-6">Menu Items</h4>
+            <div id="menuContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </section>
     </main>
+
+    <!-- Slide-over Cart Drawer -->
+    <div id="cartDrawer" class="fixed inset-0 z-50 bg-black/50 hidden flex justify-end">
+        <div class="bg-white w-full max-w-md h-full p-6 flex flex-col justify-between shadow-2xl animate-fade-in">
+            <div>
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold flex items-center gap-2"><i data-lucide="shopping-cart"></i> Your Cart</h3>
+                    <button class="text-gray-500 hover:text-gray-700"><i data-lucide="x" class="w-6 h-6"></i></button>
+                </div>
+                <div id="cartItems" class="space-y-4 overflow-y-auto max-h-[35vh]"></div>
+                <!-- Checkout Form Details -->
+                <div class="mt-6 space-y-3 border-t pt-4">
+                    <input type="text" id="custName" placeholder="Your Full Name" class="w-full px-3 py-2.5 rounded-xl border text-sm focus:outline-orange-500">
+                    <input type="text" id="custMobile" placeholder="Mobile Number" class="w-full px-3 py-2.5 rounded-xl border text-sm focus:outline-orange-500">
+                    <input type="text" id="custAddress" placeholder="Delivery Address" class="w-full px-3 py-2.5 rounded-xl border text-sm focus:outline-orange-500">
+                </div>
+            </div>
+            <div class="border-t pt-4">
+                <div class="flex justify-between font-bold text-lg mb-4">
+                    <span>Total:</span>
+                    <span id="cartTotal" class="text-orange-500">$0.00</span>
+                </div>
+                <button class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-xl transition shadow-lg shadow-orange-500/30">Place Order</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer class="bg-white border-t py-6 text-center text-gray-500 text-sm">
-        <p>&copy; 2026 FoodHub Rider Portal. All rights reserved.</p>
+        <p>&copy; 2026 FoodHub. All rights reserved.</p>
     </footer>
 
-    <!-- Script Logic -->
     <script>
-        const SUPABASE_URL = 'https://kdqyompkfmnocpihfzdj.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkcXlvbXBrZm1ub2NwaWhmemRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzMDkxOTIsImV4cCI6MjEwNDg4NTE5Mn0.4gmwMruyf54ZdXAADEAa9noLZD5JMFyLOzrszUIMVns';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        let isRegisterMode = false;
-        let loggedInRider = null;
-
         lucide.createIcons();
-
-        function toggleAuthMode() {
-            isRegisterMode = !isRegisterMode;
-            const regFields = document.getElementById('registerFields');
-            const authTitle = document.getElementById('authTitle');
-            const authSubmitBtn = document.getElementById('authSubmitBtn');
-            const authToggleText = document.getElementById('authToggleText');
-            const authToggleBtn = document.getElementById('authToggleBtn');
-
-            if(isRegisterMode) {
-                regFields.classList.remove('hidden');
-                authTitle.innerText = "Rider Registration";
-                authSubmitBtn.innerText = "Register";
-                authToggleText.innerText = "Already have an account?";
-                authToggleBtn.innerText = "Login here";
-            } else {
-                regFields.classList.add('hidden');
-                authTitle.innerText = "Rider Login";
-                authSubmitBtn.innerText = "Login";
-                authToggleText.innerText = "Don't have an account?";
-                authToggleBtn.innerText = "Register here";
-            }
-        }
-
-        async function handleAuthAction() {
-            const phone = document.getElementById('authPhone').value.trim();
-            const password = document.getElementById('authPassword').value.trim();
-
-            if(!phone || !password) {
-                alert("Please fill in phone and password!");
-                return;
-            }
-
-            if(isRegisterMode) {
-                const name = document.getElementById('regName').value.trim();
-                const vehicle = document.getElementById('regVehicle').value.trim();
-
-                if(!name) { alert("Name is required!"); return; }
-
-                // riders table-e data insert kora
-                const { error: insertError } = await supabaseClient.from('riders').insert([{
-                    name, phone, vehicle_info: vehicle, status: 'Available'
-                }]);
-
-                if(insertError) {
-                    alert("Registration failed: " + insertError.message);
-                    return;
-                }
-
-                alert("Rider registration successful! Please login.");
-                toggleAuthMode();
-
-            } else {
-                // LOGIN
-                const { data, error } = await supabaseClient.from('riders').select('*').eq('phone', phone).single();
-                
-                if(error || !data) {
-                    alert("Invalid phone number or rider not found!");
-                    return;
-                }
-
-                loggedInRider = data;
-                loadRiderDashboard();
-            }
-        }
-
-        function loadRiderDashboard() {
-            document.getElementById('authSection').classList.add('hidden');
-            document.getElementById('dashboardSection').classList.remove('hidden');
-            
-            document.getElementById('authHeaderBtn').innerHTML = `
-                <button onclick="logout()" class="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-xl font-medium text-sm flex items-center gap-1">
-                    <i data-lucide="log-out" class="w-4 h-4"></i> Logout
-                </button>
-            `;
-
-            document.getElementById('riderNameDisplay').innerText = loggedInRider.name;
-            document.getElementById('riderVehicleDisplay').innerText = `Vehicle: ${loggedInRider.vehicle_info || 'Not Specified'}`;
-
-            fetchAvailableOrders();
-            lucide.createIcons();
-        }
-
-        function logout() {
-            loggedInRider = null;
-            document.getElementById('dashboardSection').classList.add('hidden');
-            document.getElementById('authSection').classList.remove('hidden');
-            document.getElementById('authHeaderBtn').innerHTML = '';
-        }
-
-        async function fetchAvailableOrders() {
-            // orders table theke 'Pending' status-er order gulo fetch kora
-            const { data, error } = await supabaseClient.from('orders').select('*').eq('status', 'Pending');
-            const container = document.getElementById('availableOrdersList');
-            container.innerHTML = '';
-
-            if(error || !data || data.length === 0) {
-                container.innerHTML = `<p class="text-center text-gray-400 py-6">No pending orders available right now.</p>`;
-                return;
-            }
-
-            data.forEach(order => {
-                let itemsList = '';
-                if(Array.isArray(order.items)) {
-                    order.items.forEach(i => {
-                        itemsList += `<span class="text-xs bg-gray-100 px-2 py-1 rounded mr-1">${i.name} (x${i.qty})</span>`;
-                    });
-                }
-
-                container.innerHTML += `
-                    <div class="bg-gray-50 p-5 rounded-2xl border flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <span class="font-bold text-gray-800">Order #${order.id}</span>
-                                <span class="text-xs bg-orange-100 text-orange-600 px-2.5 py-0.5 rounded-full font-semibold">${order.vendor_name || 'Restaurant'}</span>
-                            </div>
-                            <p class="text-sm text-gray-600 mt-1"><b>Customer:</b> ${order.customer_name} (${order.mobile || 'No Phone'})</p>
-                            <p class="text-sm text-gray-600"><b>Address:</b> ${order.delivery_address}</p>
-                            <div class="mt-2 flex flex-wrap gap-1">${itemsList}</div>
-                        </div>
-                        <div class="text-right flex flex-col items-end gap-2">
-                            <span class="text-lg font-bold text-orange-500">$${order.amount}</span>
-                            <button onclick="acceptOrder(${order.id})" class="bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow">
-                                Accept Order
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
-            lucide.createIcons();
-        }
-
-        async function acceptOrder(orderId) {
-            // Order status update kore 'Out for Delivery' ba rider-er id assign kora
-            const { error } = await supabaseClient.from('orders').update({
-                status: 'Out for Delivery',
-                rider_id: loggedInRider.id
-            }).eq('id', orderId);
-
-            if(error) {
-                alert("Failed to accept order: " + error.message);
-            } else {
-                alert("✅ Order accepted successfully! Please pick it up from the restaurant.");
-                fetchAvailableOrders();
-            }
-        }
     </script>
 </body>
 </html>
+
