@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Delivery Charge Calculator</title>
+    <title>Delivery Charge Calculator with Google Map Link</title>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -14,13 +14,15 @@
         #loc-btn { background: #ff385c; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: bold; }
         #loc-btn:hover { background: #e00b32; }
         .info-box { margin-top: 10px; padding: 12px; background: #eef2f7; border-radius: 5px; font-size: 14px; }
+        .map-link { display: inline-block; margin-top: 8px; color: #1a73e8; text-decoration: none; font-weight: bold; }
+        .map-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h3>Delivery Charge Calculator</h3>
-    <p style="font-size: 13px; color: #665;">Map-e click korun ba nicher button e click kore current location nin:</p>
+    <h3>Delivery Charge & Map Link Generator</h3>
+    <p style="font-size: 13px; color: #665;">Map-e click korun ba current location button use korun:</p>
     
     <div class="btn-container">
         <button id="loc-btn">📍 Use My Current Location</button>
@@ -31,6 +33,7 @@
     <div class="info-box" id="result">
         <p><strong>Distance:</strong> 0 km</p>
         <p><strong>Delivery Charge:</strong> 0 BDT</p>
+        <p><strong>Google Map Link:</strong> Not generated yet</p>
     </div>
 </div>
 
@@ -75,7 +78,7 @@
         }
     });
 
-    // Location update ebong distance calculation function
+    // Location update, distance calculation ebong Google Map link generate kora
     function updateLocation(lat, lng) {
         if (customerMarker) {
             map.removeLayer(customerMarker);
@@ -95,9 +98,16 @@
             deliveryCharge = 80 + Math.ceil(distance - 5) * 15;
         }
 
+        // Google Map Direct Link Generate Kora
+        const googleMapUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+
+        // Result screen e show kora
         document.getElementById('result').innerHTML = `
             <p><strong>Distance:</strong> ${distance.toFixed(2)} km</p>
             <p><strong>Delivery Charge:</strong> <strong>${deliveryCharge} BDT</strong></p>
+            <p><strong>Google Map Link:</strong> <br>
+               <a href="${googleMapUrl}" target="_blank" class="map-link">🔗 Open this location in Google Maps</a>
+            </p>
         `;
     }
 
@@ -120,4 +130,3 @@
 
 </body>
 </html>
-
