@@ -3,27 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Delivery Charge Calculator (Free Map)</title>
+    <title>Delivery Charge Calculator</title>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f4f4f9; }
-        .container { max-width: 700px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        #map { height: 400px; width: 100%; border-radius: 6px; margin-top: 15px; }
-        .info-box { margin-top: 15px; padding: 15px; background: #eef2f7; border-radius: 5px; }
-        h2 { color: #333; margin-top: 0; }
+        body { font-family: Arial, sans-serif; margin: 0; padding: 15px; background: #f4f4f9; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        #map { height: 350px; width: 100%; border-radius: 6px; margin-top: 10px; }
+        .btn-container { margin-top: 10px; text-align: right; }
+        #loc-btn { background: #ff385c; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: bold; }
+        #loc-btn:hover { background: #e00b32; }
+        .info-box { margin-top: 10px; padding: 12px; background: #eef2f7; border-radius: 5px; font-size: 14px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Restaurant Delivery Charge Calculator</h2>
-    <p>Map-e click ba pin kore apnar delivery location select korun:</p>
+    <h3>Delivery Charge Calculator</h3>
+    <p style="font-size: 13px; color: #665;">Map-e click korun ba nicher button e click kore current location nin:</p>
     
+    <div class="btn-container">
+        <button id="loc-btn">📍 Use My Current Location</button>
+    </div>
+
     <div id="map"></div>
 
     <div class="info-box" id="result">
-        <p><strong>Selected Location:</strong> Please click on the map.</p>
         <p><strong>Distance:</strong> 0 km</p>
         <p><strong>Delivery Charge:</strong> 0 BDT</p>
     </div>
@@ -32,70 +37,80 @@
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // 1. Restaurant er Fixed Coordinates (Udahoron sorup Chattogram er kono jaiga)
+    // Restaurant er Fixed Coordinates (Udahoron: Chattogram)
     const restaurantLat = 22.3569;
     const restaurantLng = 91.7832;
 
-    // 2. Map Initialize kora (Chattogram center kore)
+    // Map Initialize
     const map = L.map('map').setView([restaurantLat, restaurantLng], 13);
 
-    // 3. OpenStreetMap tile layer add kora (100% Free)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
-        attribution: '&copy; OpenStreetMap contributors'
+        attribution: '&copy; OpenStreetMap'
     }).addTo(map);
 
-    // Restaurant er marker add kora (Red color ba default)
-    const restaurantMarker = L.marker([restaurantLat, restaurantLng]).addTo(map)
-        .bindPopup("<b>Our Restaurant</b>").openPopup();
+    // Restaurant Marker
+    L.marker([restaurantLat, restaurantLng]).addTo(map).bindPopup("<b>Restaurant</b>");
 
     let customerMarker = null;
 
-    // 4. Map e click korle customer er marker bosabe ebong distance calculate korbe
+    // Map-e manually click korle
     map.on('click', function(e) {
-        const custLat = e.latlng.lat;
-        const custLng = e.latlng.lng;
+        updateLocation(e.latlng.lat, e.latlng.lng);
+    });
 
-        // Jodi age kono customer marker thake, taile seta remove kore dibe
+    // Current Location Button Click Korle
+    document.getElementById('loc-btn').addEventListener('click', function() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                map.setView([lat, lng], 15);
+                updateLocation(lat, lng);
+            }, function(error) {
+                alert("Location access denied or not available!");
+            });
+        } else {
+            alert("Geolocation is not supported by your browser");
+        }
+    });
+
+    // Location update ebong distance calculation function
+    function updateLocation(lat, lng) {
         if (customerMarker) {
             map.removeLayer(customerMarker);
         }
 
-        // Notun marker add kora
-        customerMarker = L.marker([custLat, custLng]).addTo(map)
-            .bindPopup("<b>Delivery Location</b>").openPopup();
+        customerMarker = L.marker([lat, lng]).addTo(map).bindPopup("<b>Delivery Location</b>").openPopup();
 
-        // Distance calculate kora (Haversine formula diye)
-        const distance = calculateDistance(restaurantLat, restaurantLng, custLat, custLng);
+        const distance = calculateDistance(restaurantLat, restaurantLng, lat, lng);
         
-        // Delivery charge calculate logic
+        // Delivery Charge Logic
         let deliveryCharge = 0;
         if (distance <= 2) {
-            deliveryCharge = 50; // 2 km er modhe 50 Taka
+            deliveryCharge = 50;
         } else if (distance <= 5) {
-            deliveryCharge = 80; // 5 km er modhe 80 Taka
+            deliveryCharge = 80;
         } else {
-            deliveryCharge = 80 + Math.ceil(distance - 5) * 15; // 5 km er beshi hole proti km e 15 taka extra
+            deliveryCharge = 80 + Math.ceil(distance - 5) * 15;
         }
 
-        // Result screen e show kora
         document.getElementById('result').innerHTML = `
-            <p><strong>Selected Coordinates:</strong> ${custLat.toFixed(4)}, ${custLng.toFixed(4)}</p>
             <p><strong>Distance:</strong> ${distance.toFixed(2)} km</p>
             <p><strong>Delivery Charge:</strong> <strong>${deliveryCharge} BDT</strong></p>
         `;
-    });
+    }
 
-    // Haversine formula function
+    // Haversine formula
     function calculateDistance(lat1, lon1, lat2, lon2) {
-        let R = 6371; // Earth radius in km
+        let R = 6371; 
         let dLat = deg2rad(lat2 - lat1);
         let dLon = deg2rad(lon2 - lon1);
         let a = Math.sin(dLat/2) * Math.sin(dLat/2) +
                 Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
                 Math.sin(dLon/2) * Math.sin(dLon/2);
         let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return R * c; // Distance in km
+        return R * c;
     }
 
     function deg2rad(deg) {
@@ -105,3 +120,4 @@
 
 </body>
 </html>
+
