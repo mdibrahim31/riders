@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Delivery Charge Calculator with Google Map Link</title>
+    <title>Road Distance & Delivery Charge Calculator</title>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -21,7 +21,7 @@
 <body>
 
 <div class="container">
-    <h3>Delivery Charge & Map Link Generator</h3>
+    <h3>Delivery Charge Calculator</h3>
     <p style="font-size: 13px; color: #665;">Map-e click korun ba current location button use korun:</p>
     
     <div class="btn-container">
@@ -31,7 +31,7 @@
     <div id="map"></div>
 
     <div class="info-box" id="result">
-        <p><strong>Distance:</strong> 0 km</p>
+        <p><strong>Route Distance:</strong> Calculating...</p>
         <p><strong>Delivery Charge:</strong> 0 BDT</p>
         <p><strong>Google Map Link:</strong> Not generated yet</p>
     </div>
@@ -40,11 +40,13 @@
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // Restaurant er Fixed Coordinates (Udahoron: Chattogram)
-    const restaurantLat = 22.3569;
-    const restaurantLng = 91.7832;
+    // ==========================================
+    // APNAR RESTAURANT ER LATITUDE & LONGITUDE EKANE DIN:
+    // ==========================================
+    const restaurantLat = 22.3569; // Ekhane apnar restaurant er lat boshaben
+    const restaurantLng = 91.7832; // Ekhane apnar restaurant er lng boshaben
 
-    // Map Initialize
+    // Map Initialize (Restaurant er location ke center kore map dekhabe)
     const map = L.map('map').setView([restaurantLat, restaurantLng], 13);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -53,13 +55,14 @@
     }).addTo(map);
 
     // Restaurant Marker
-    L.marker([restaurantLat, restaurantLng]).addTo(map).bindPopup("<b>Restaurant</b>");
+    L.marker([restaurantLat, restaurantLng]).addTo(map).bindPopup("<b>Our Restaurant</b>").openPopup();
 
     let customerMarker = null;
+    let routeLine = null;
 
     // Map-e manually click korle
     map.on('click', function(e) {
-        updateLocation(e.latlng.lat, e.latlng.lng);
+        getRoadDistance(restaurantLat, restaurantLng, e.latlng.lat, e.latlng.lng);
     });
 
     // Current Location Button Click Korle
@@ -69,7 +72,7 @@
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
                 map.setView([lat, lng], 15);
-                updateLocation(lat, lng);
+                getRoadDistance(restaurantLat, restaurantLng, lat, lng);
             }, function(error) {
                 alert("Location access denied or not available!");
             });
@@ -78,53 +81,59 @@
         }
     });
 
-    // Location update, distance calculation ebong Google Map link generate kora
-    function updateLocation(lat, lng) {
+    // OSRM API diye Real Road Distance & Route Line anar function
+    function getRoadDistance(lat1, lon1, lat2, lon2) {
         if (customerMarker) {
             map.removeLayer(customerMarker);
         }
-
-        customerMarker = L.marker([lat, lng]).addTo(map).bindPopup("<b>Delivery Location</b>").openPopup();
-
-        const distance = calculateDistance(restaurantLat, restaurantLng, lat, lng);
-        
-        // Delivery Charge Logic
-        let deliveryCharge = 0;
-        if (distance <= 2) {
-            deliveryCharge = 50;
-        } else if (distance <= 5) {
-            deliveryCharge = 80;
-        } else {
-            deliveryCharge = 80 + Math.ceil(distance - 5) * 15;
+        if (routeLine) {
+            map.removeLayer(routeLine);
         }
 
-        // Google Map Direct Link Generate Kora
-        const googleMapUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+        customerMarker = L.marker([lat2, lon2]).addTo(map).bindPopup("<b>Delivery Location</b>").openPopup();
 
-        // Result screen e show kora
-        document.getElementById('result').innerHTML = `
-            <p><strong>Distance:</strong> ${distance.toFixed(2)} km</p>
-            <p><strong>Delivery Charge:</strong> <strong>${deliveryCharge} BDT</strong></p>
-            <p><strong>Google Map Link:</strong> <br>
-               <a href="${googleMapUrl}" target="_blank" class="map-link">🔗 Open this location in Google Maps</a>
-            </p>
-        `;
-    }
+        // OSRM Free Routing API Endpoint
+        const url = `https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=full&geometries=geojson`;
 
-    // Haversine formula
-    function calculateDistance(lat1, lon1, lat2, lon2) {
-        let R = 6371; 
-        let dLat = deg2rad(lat2 - lat1);
-        let dLon = deg2rad(lon2 - lon1);
-        let a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
-                Math.sin(dLon/2) * Math.sin(dLon/2);
-        let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return R * c;
-    }
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.routes && data.routes.length > 0) {
+                    const distanceInMeters = data.routes[0].distance; 
+                    const distanceInKm = distanceInMeters / 1000;     
+                    
+                    const routeCoordinates = data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
 
-    function deg2rad(deg) {
-        return deg * (Math.PI/180);
+                    // Map-e rasta draw korar jonno polyline add kora
+                    routeLine = L.polyline(routeCoordinates, {color: 'blue', weight: 4}).addTo(map);
+
+                    // Delivery Charge Logic (Road distance onujayi)
+                    let deliveryCharge = 0;
+                    if (distanceInKm <= 2) {
+                        deliveryCharge = 50;
+                    } else if (distanceInKm <= 5) {
+                        deliveryCharge = 80;
+                    } else {
+                        deliveryCharge = 80 + Math.ceil(distanceInKm - 5) * 15;
+                    }
+
+                    const googleMapUrl = `https://www.google.com/maps?q=${lat2},${lng2}`;
+
+                    document.getElementById('result').innerHTML = `
+                        <p><strong>Route Distance:</strong> ${distanceInKm.toFixed(2)} km (By Road)</p>
+                        <p><strong>Delivery Charge:</strong> <strong>${deliveryCharge} BDT</strong></p>
+                        <p><strong>Google Map Link:</strong> <br>
+                           <a href="${googleMapUrl}" target="_blank" class="map-link">🔗 Open this location in Google Maps</a>
+                        </p>
+                    `;
+                } else {
+                    alert("Could not find a driving route to this location.");
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching route:', error);
+                alert("Failed to calculate route distance.");
+            });
     }
 </script>
 
